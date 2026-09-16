@@ -1,9 +1,7 @@
-%% ============================================================
 %% Superposición en el Dominio de la Frecuencia y del Tiempo
 %% Pruebas A a D (M = 128, 256, 512, 1024)
 %% ============================================================
 clear; clc; close all;
-
 try
     cd(fileparts(mfilename('fullpath')));
 catch
@@ -56,7 +54,7 @@ ylim([-120, 5]);
 legend('Location', 'northeast');
 hold off;
 
-% --- 4. Graficar señales superpuestas (Dominio del Tiempo) ---
+% --- 4. Graficar señales superpuestas (Dominio del Tiempo Alineadas) ---
 figure('Color', 'w', 'Name', 'Superposición Dominio del Tiempo');
 hold on;
 etiqueta_y = 'Amplitud';
@@ -64,7 +62,6 @@ etiqueta_y = 'Amplitud';
 % Graficamos en orden inverso (de mayor a menor M) para que M=128 quede encima
 for k = num_archivos:-1:1
     df = datos_tiempo{k}; 
-    
     if ismember('voltage_V', df.Properties.VariableNames)
         eje_y = df.voltage_V;
         etiqueta_y = 'Voltaje [V]';
@@ -76,7 +73,22 @@ for k = num_archivos:-1:1
         etiqueta_y = 'Amplitud';
     end
     
-    plot(df.time_s, eje_y, ...
+    % --- ALINEACIÓN DE FASE EN T = 0 ---
+    y_ac = eje_y - mean(eje_y); % Eliminar offset DC para encontrar el punto medio
+    
+    % Buscar el primer cruce por cero de subida (pendiente positiva)
+    idx_cruce = find(y_ac(1:end-1) <= 0 & y_ac(2:end) > 0, 1, 'first');
+    
+    if ~isempty(idx_cruce)
+        t_ref = df.time_s(idx_cruce);
+    else
+        t_ref = df.time_s(1); % Respaldo por si no detecta el cruce
+    end
+    
+    % Desplazar el vector de tiempo para que el inicio de fase coincida en t = 0
+    t_alineado = df.time_s - t_ref;
+    
+    plot(t_alineado, eje_y, ...
         'Color', colores{k}, 'LineWidth', 1.2, ...
         'DisplayName', etiquetas{k});
 end
@@ -84,9 +96,9 @@ end
 grid on;
 xlabel('Tiempo [s]');
 ylabel(etiqueta_y);
-title('Superposición de Señales en el Dominio del Tiempo');
+title('Superposición de Señales en el Dominio del Tiempo (Alineadas en Fase)');
 legend('Location', 'northeast');
 
-% CLAVE: Hacer zoom en los primeros ciclos para ver la onda claramente
-xlim([0, 0.015]); % Muestra aproximadamente 15 ms (ajusta según la frecuencia de tu señal)
+% Ajuste de límites para ver claramente los ciclos desde t = 0
+xlim([0, 0.015]); % 15 ms
 hold off;
