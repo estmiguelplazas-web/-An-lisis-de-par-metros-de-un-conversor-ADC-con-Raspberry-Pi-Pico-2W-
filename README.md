@@ -1,4 +1,4 @@
-# Práctica 4 - Explorando la Conversión Análoga a Digital (ADC)
+# Explorando la Conversión Análoga a Digital (ADC)
 
 ## Autores
 
